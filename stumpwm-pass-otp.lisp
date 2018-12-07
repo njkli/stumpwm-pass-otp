@@ -62,26 +62,20 @@
 (defvar *entry-display* nil)
 (defvar *entry-autofill* nil)
 
-(defcommand pass-otp () ()
-  "show pass for current window"
-  ;; (if (find-match)
-  ;;     (setf msg (format nil "~{~A~^, ~}" (find-match)))
-  ;;     (setf msg "Not found!"))
-  ;; (message msg)
-  (if (find-match)
+(defun entries-menu (menu-list)
       (let ((sel (select-from-menu
                   (current-screen)
-                  (format-menu (find-match))
+                  (format-menu menu-list)
                   nil
                   0
                   ;; FIXME: can't pass keymap directly here
                   (let ((m (make-sparse-keymap)))
                     (define-key m (kbd "M-RET") (lambda (x)
                                                   (setf *entry-autofill* t)
-                                                  (:menu-finish x)))
+                                                  (menu-finish x)))
                     (define-key m (kbd "M-o") (lambda (x)
                                                 (setf *entry-display* t)
-                                                (:menu-finish x)))
+                                                (menu-finish x)))
                     m)
                   )))
         (when sel
@@ -92,9 +86,23 @@
                                    (setf *entry-display* nil)
                                    (entry-display (car sel))))
                 (t (entry-display-menu (car sel))))
-          ))
-      (message "No match found!")
-      )
+          )))
+
+;; (defun password-store-insert ()
+;;   (read-one-line (current-screen)
+;;                  "entry name: ")
+;;   )
+
+(defcommand pass-otp () ()
+  "show pass for current window"
+  (cond ((find-match) (entries-menu (find-match)))
+        ((known-window-class-p) (message "Here be new menu"))
+        (t (message "No match!")))
+  )
+
+(defcommand pass-otp-show-all () ()
+  "Show all entries"
+  (entries-menu (pass-entries))
   )
 
 (define-key *root-map* (kbd "s-p") "pass-otp")
