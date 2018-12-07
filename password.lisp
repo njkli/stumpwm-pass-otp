@@ -65,14 +65,4 @@
 (setf pass (make-instance 'password :entry "github.com/voipscout"))
 (setf pass (make-instance 'password :entry "icq.com/27708472"))
 
-(otp pass)
-(uname pass)
-(describe pass)
-(entry pass)
-(display pass)
-(precache pass)
-(passwd pass)
-
-(princ-to-string (raw pass))
-
 ||#
