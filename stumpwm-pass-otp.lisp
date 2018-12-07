@@ -1,12 +1,17 @@
 (defpackage #:stumpwm-pass-otp
   (:use #:cl #:listopia #:cl-string-match #:stumpwm)
-  (:export *password-store-dir* *stumpwm-pass-otp-map* show-uri))
+  (:export *password-store-dir* *pass-otp-map* pass-otp))
 
 (in-package #:stumpwm-pass-otp)
 
+(defvar *uri-regex* "(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])")
+
+(defvar *uri-regex-scanner*
+  (cl-ppcre:create-scanner *uri-regex* :multi-line-mode t :case-insensitive-mode t))
+
 (defvar *password-store-dir* (merge-pathnames #p".password-store/" (user-homedir-pathname)))
 
-(defvar *stumpwm-pass-otp-map* nil )
+(defvar *pass-otp-map* nil )
 ;; (when (null *stumpwm-pass-otp-map*)
 ;;   (setf *stumpwm-pass-otp-map*
 ;;         (let ((m (stumpwm:make-sparse-keymap)))
@@ -26,90 +31,88 @@
                                :type "gpg")))))
 
 (defun matches (entry)
-  (listopia:.filter (lambda (x) (sm:string-contains-brute entry x)) (pass-entries)))
+  (.filter (lambda (x) (string-contains-brute entry x)) (pass-entries)))
 
-(defun known-window-class ()
-  (let ((class (stumpwm:window-class (stumpwm:current-window))))
+(defun known-window-class-p ()
+  (let ((class (window-class (current-window))))
     (if (ppcre:scan "Firefox|Chromium" class) t nil)))
 
 (defun domain (window-title-str)
-  (quri:uri-domain (quri:uri (sequence:subseq (cadr (ppcre:split " - " window-title-str)) 0))))
+  (let ((uri (cl-ppcre:scan-to-strings *uri-regex-scanner* window-title-str)))
+    (quri:uri-domain (quri:uri uri))))
 
 (defun format-menu (items)
   (mapcar (lambda (i) (list i i)) items))
 
 (defun find-match ()
-  (let ((title (stumpwm:window-title (stumpwm:current-window))))
-    (if (known-window-class)
-         (matches (domain title))
-         (pass-entries))))
+  (let ((title (window-title (current-window))))
+    (if (and (known-window-class-p) (matches (domain title)))
+        (matches (domain title))
+        nil)))
 
-;; (defun otp (entry)
-;;   (stumpwm:run-shell-command (format nil "pass otp -c ~A" entry)))
-
-(defun entry-show (entry)
+(defun entry-display (entry)
   (let ((pass-obj (make-instance 'password :entry entry)))
     (display pass-obj)))
 
-;; (defun entry-show (entry)
-;;   (let ((pass-str (stumpwm:run-shell-command (format nil "pass show ~A" entry) t)))
-;;     (stumpwm:message pass-str)))
+(defun entry-display-menu (entry)
+  (let ((pass-obj (make-instance 'password :entry entry)))
+    (display-menu pass-obj)))
 
-;; (defun entry-show (menu_obj)
-;;   (let ((entry (car (nth (stumpwm::menu-selected menu_obj) (stumpwm::menu-table menu_obj)))))
-;;     (print entry)
-;;     (stumpwm:message entry)))
-
-(defvar *entry-show* nil)
+;; FIXME: keymap in menu doesn't work for me, so these are here
+(defvar *entry-display* nil)
 (defvar *entry-autofill* nil)
 
-(stumpwm:defcommand show-uri () ()
-  "show win uri"
+(defcommand pass-otp () ()
+  "show pass for current window"
+  ;; (if (find-match)
+  ;;     (setf msg (format nil "~{~A~^, ~}" (find-match)))
+  ;;     (setf msg "Not found!"))
+  ;; (message msg)
   (if (find-match)
-      (setf msg (format nil "~{~A~^, ~}" (find-match)))
-      (setf msg "Not found!"))
-  ;; (stumpwm:message msg)
-  (let ((sel (stumpwm:select-from-menu
-              (stumpwm:current-screen)
-              (format-menu (find-match))
-              nil
-              0
-              (let ((m (make-sparse-keymap)))
-                (define-key m (kbd "M-RET") (lambda (x)
-                                              (setf *entry-autofill* t)
-                                              (stumpwm::menu-finish x)))
-                (define-key m (kbd "M-o") (lambda (x)
-                                            (setf *entry-show* t)
-                                            (stumpwm::menu-finish x)))
-                m)
-              )))
-    (when sel
-      (when *entry-autofill*
-        (setf *entry-autofill* nil)
-        (stumpwm:message "Autofill requested! ~A" (car sel)) )
-      (when *entry-show*
-        (setf *entry-show* nil)
-        (entry-show (car sel)) )
-      ;; (entry-action (car sel))
+      (let ((sel (select-from-menu
+                  (current-screen)
+                  (format-menu (find-match))
+                  nil
+                  0
+                  ;; FIXME: can't pass keymap directly here
+                  (let ((m (make-sparse-keymap)))
+                    (define-key m (kbd "M-RET") (lambda (x)
+                                                  (setf *entry-autofill* t)
+                                                  (:menu-finish x)))
+                    (define-key m (kbd "M-o") (lambda (x)
+                                                (setf *entry-display* t)
+                                                (:menu-finish x)))
+                    m)
+                  )))
+        (when sel
+          (cond (*entry-autofill* (progn
+                                    (setf *entry-autofill* nil)
+                                    (message "Autofill requested! ~A" (car sel))))
+                (*entry-display* (progn
+                                   (setf *entry-display* nil)
+                                   (entry-display (car sel))))
+                (t (entry-display-menu (car sel))))
+          ))
+      (message "No match found!")
+      )
+  )
 
-      ;; (show-entry (car sel))
-      ;; (otp (car sel))
-      ;; Action stuff
-      ;; (stumpwm:message (format nil "~A : ~A" sel (stumpwm:get-x-selection 5 :clipboard)))
-      ;; (stumpwm:message (stumpwm:run-shell-command (format nil "pass show ~a" sel) t))
-      )))
+(define-key *root-map* (kbd "s-p") "pass-otp")
 
 #||
-(stumpwm:defcommand pass-copy () ()
+
+(password-store-insert "mytes.com/bullshit@user.cc" "somep")
+
+(defcommand pass-copy () ()
   "Put a password into the clipboard."
-  (let ((entry (stumpwm:completing-read (stumpwm:current-screen)
+  (let ((entry (completing-read (current-screen)
                                         "entry: "
                                         (pass-entries))))
-    (stumpwm:run-shell-command (format nil "pass -c ~a" entry))))
+    (run-shell-command (format nil "pass -c ~a" entry))))
 
-(stumpwm:defcommand pass-generate () ()
+(defcommand pass-generate () ()
   "Generate a password and put it into the clipboard"
-  (let ((entry-name (stumpwm:read-one-line (stumpwm:current-screen)
+  (let ((entry-name (read-one-line (stumpwm:current-screen)
                                            "entry name: ")))
 (stumpwm:run-shell-command (format nil "pass generate -c ~a" entry-name))))
 ||#

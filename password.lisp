@@ -1,78 +1,78 @@
 ;; Handling pass entries here
 (in-package #:stumpwm-pass-otp)
 
-;; (defun defined (regex obj)
-;;   (ppcre:register-groups-bind (field)
-;;       (regex (slot-value obj 'raw) :sharedp t)
-;;     field)
-;;   )
+(defun otpauth-to-hex (secret)
+  (format nil "~{~2,'0x~}" (coerce (cl-base32:base32-to-bytes secret) 'list)))
 
 (defclass password ()
-  ((entry :accessor entry :type string :initarg :entry :initform (error "Must supply password entry"))
+  ((entry :accessor entry :type string :initarg :entry :initform (message "Must supply password entry"))
    raw
    lines))
 
 (defmethod precache ((obj password))
   (setf (slot-value obj 'raw)
-        (stumpwm:run-shell-command (format nil "pass show ~A" (entry obj)) t)
-
+        (run-shell-command (format nil "pass show ~A" (entry obj)) t)
         (slot-value obj 'lines)
         (cl-ppcre:split "\\n" (slot-value obj 'raw))))
 
 (defmethod display ((obj password))
-  (stumpwm:message (slot-value obj 'raw)))
+  (message (slot-value obj 'raw)))
+
+(defmethod display-menu ((obj password))
+  (let  ((sel (select-from-menu
+               (current-screen)
+               (format-menu (slot-value obj 'lines))
+               "set-x-selection:"
+               0
+               )))
+    (when sel
+      ;; TODO: check if clipboard-history module loaded before blatantly doing stuff to it
+      ;; clipboard-history uses polling, so what I do here is useless
+      ;; (clipboard-history:stop-clipboard-manager)
+      ;; (clipboard-history:start-clipboard-manager)
+      (set-x-selection (cond ((ppcre:scan ": " (car sel)) (ppcre:register-groups-bind (field)
+                                                              (": (.*)" (car sel) :sharedp t)
+                                                            field))
+                              ((ppcre:scan "otpauth:" (car sel)) (otp obj))
+                              (t (car sel))) :clipboard))))
 
 (defmethod passwd ((obj password))
  (car (slot-value obj 'lines)))
 
 (defmethod uname ((obj password))
-  (let ((defined (ppcre:register-groups-bind (uname)
-                     ("username: (.*)" (slot-value pass 'raw) :sharedp t)
-                   uname)))
+  (let ((defined (field-for obj "username: (.*)")))
     (if defined defined (car (last (cl-ppcre:split "/" (entry obj)))))))
 
 (defmethod otp ((obj password))
+  (let ((defined (field-for obj "(otpauth:.*)")))
+    (if defined
+        (let ((secret (assoc-utils:aget (quri:uri-query-params (quri:uri defined)) "secret")))
+          (write-to-string (cl-totp:totp (otpauth-to-hex secret))))
+        (message (format nil "^B^1OTP undefined:~%^n~A" (entry obj))))))
 
-  (stumpwm:run-shell-command (format nil "pass otp ~A" (entry obj)) t))
+(defmethod field-for ((obj password) &rest regex)
+  (ppcre:register-groups-bind (field)
+      ((car regex) (slot-value obj 'raw) :sharedp t)
+    field))
 
 (defmethod initialize-instance :after ((obj password) &key)
   (precache obj))
 
-(defmethod defined-field ((obj password) &rest regex)
-  (ppcre:register-groups-bind (field)
-      (regex (slot-value obj 'raw) :sharedp t)
-    field)
-  )
-
 #||
+(message (format nil "^B^1*Error In Command '^b~a^B': ^nOther shit" "some" ))
+
 ;; working with the class
+(setf pass (make-instance 'password :entry "github.com/voipscout"))
 (setf pass (make-instance 'password :entry "icq.com/27708472"))
 
-((defined-field pass) "username: (.*)")
-
-(describe (defined-field pass "username: (.*)") )
-
-(describe (uname pass))
-
+(otp pass)
+(uname pass)
 (describe pass)
 (entry pass)
 (display pass)
 (precache pass)
 (passwd pass)
+
 (princ-to-string (raw pass))
 
-
-(describe (cl-ppcre:scan-to-strings "username: (.*)" (slot-value pass 'raw) :sharedp t ) )
-
-
-(ppcre:register-groups-bind (uname)
-    ("username: (.*)" (slot-value pass 'raw) :sharedp t)
-  uname)
-
-  ;; (print first))
-
-(print (car (slot-value pass 'lines)) )
-;; (defmethod initialize-instance (obj password)
-;;   (call-method (pass obj) :pass "strpass") )
-;; (((pass "s") pass) "bullocks")
 ||#
