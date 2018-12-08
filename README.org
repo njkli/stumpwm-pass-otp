@@ -1,12 +1,24 @@
 #+STARTUP: indent overview align fold nodlcheck hidestars oddeven lognotestate inlineimages
-* stumpwm-pass-otp
+* stumpwm pass-otp
 pass-otp helper for StumpWM
 ** Features
 - Window recognition
 - Autofill
 ** Dependencies
 - xdotool
-- pass
+- [[https://www.passwordstore.org/][pass]]
 - pass-otp
-- emacs pass
-- firefox/chromium plugins to have url in title
+- [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]]/[[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][chromium]] plugins to have url in title
+** Usage
+#+BEGIN_SRC lisp
+  (setf pass-otp:*password-store-dir* (merge-pathnames #p".password-store/" (user-homedir-pathname))
+        ,*known-window-class-regex* "Firefox|Chromium"
+        ,*uri-regex* "(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])"
+        ,*xdotool-delay* 3
+        ,*autotype-delay* 5)
+
+  (define-key *root-map* (kbd "s-p") "pass-otp")
+  (define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")
+#+END_SRC
+** TODO:
+- qr otp with screenshot shennanigans

@@ -1,14 +1,18 @@
 ;; Handling pass entries here
-(in-package #:stumpwm-pass-otp)
-
-(defun otpauth-to-hex (secret)
-  (format nil "~{~2,'0x~}" (coerce (cl-base32:base32-to-bytes secret) 'list)))
+(in-package #:pass-otp)
 
 (defvar *autotype* (hash (":enter" "xdotool key Return")
                          (":tab" "xdotool key Tab")
                          (":space" "xdotool key space")))
-(defvar *xdotool-delay* 3)
-(defvar *autotype-delay* 5)
+
+(defvar *xdotool-delay* nil)
+(when (null *xdotool-delay*) (setf *xdotool-delay* 3))
+
+(defvar *autotype-delay* nil)
+(when (null *autotype-delay*) (setf *autotype-delay* 5))
+
+(defun otpauth-to-hex (secret)
+  (format nil "~{~2,'0x~}" (coerce (cl-base32:base32-to-bytes secret) 'list)))
 
 (defclass password ()
   ((entry :accessor entry :type string :initarg :entry :initform (message "Must supply password entry"))

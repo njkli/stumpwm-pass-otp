@@ -1,31 +1,16 @@
-(defpackage #:stumpwm-pass-otp
-  (:use #:cl #:listopia #:cl-string-match #:stumpwm #:cl-hash-util)
-  (:export *password-store-dir*
-           *known-window-class-regex*
-           *uri-regex*
-           *pass-otp-map*
-           *autotype-delay*
-           *xdotool-delay*
-           ;; pass-otp
-           ;; pass-otp-show-all
-           ))
+(in-package #:pass-otp)
 
-(in-package #:stumpwm-pass-otp)
+(defvar *password-store-dir* nil)
+(when (null *password-store-dir*) (setf *password-store-dir* (merge-pathnames #p".password-store/" (user-homedir-pathname))))
 
-(defvar *password-store-dir* (merge-pathnames #p".password-store/" (user-homedir-pathname)))
-(defvar *known-window-class-regex* "Firefox|Chromium")
-(defvar *uri-regex* "(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])")
+(defvar *known-window-class-regex* nil)
+(when (null *known-window-class-regex*) (setf *known-window-class-regex* "Firefox|Chromium"))
+
+(defvar *uri-regex* nil)
+(when (null *uri-regex*) (setf *uri-regex* "(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])"))
 
 (defvar *uri-regex-scanner*
   (cl-ppcre:create-scanner *uri-regex* :multi-line-mode t :case-insensitive-mode t))
-
-(defvar *pass-otp-map* nil)
-;; (when (null *stumpwm-pass-otp-map*)
-;;   (setf *stumpwm-pass-otp-map*
-;;         (let ((m (stumpwm:make-sparse-keymap)))
-;;           (stumpwm:define-key m (stumpwm:kbd "M-o") (lambda (x) (print "Hello!")))
-;;           m)
-;;         ))
 
 (defun known-window-class-p ()
   (let ((class (window-class (current-window))))
@@ -73,6 +58,14 @@
 (defvar *entry-display* nil)
 (defvar *entry-edit* nil)
 (defvar *entry-autotype* nil)
+;; instead of that:
+(defvar *pass-otp-map* nil)
+;; (when (null *pass-otp-map*)
+;;   (setf *pass-otp-map*
+;;         (let ((m (make-sparse-keymap)))
+;;           (define-key m (kbd "M-o") (lambda (x) (print "Hello!")))
+;;           m)
+;;         ))
 
 (defun entries-menu (menu-list)
   (let ((sel (select-from-menu
@@ -80,7 +73,7 @@
               (format-menu menu-list)
               nil
               0
-              ;; FIXME: can't pass keymap directly here
+              ;; FIXME: can't pass keymap directly here, why?
               (let ((m (make-sparse-keymap)))
                 (define-key m (kbd "M-RET") (lambda (x)
                                               (setf *entry-autotype* t)
@@ -91,8 +84,7 @@
                 (define-key m (kbd "M-e") (lambda (x)
                                             (setf *entry-edit* t)
                                             (menu-finish x)))
-                m)
-              )))
+                m))))
     (when sel
       (cond (*entry-autotype* (progn
                                 (setf *entry-autotype* nil)
@@ -103,8 +95,7 @@
             (*entry-edit* (progn
                             (setf *entry-edit* nil)
                             (entry-edit (car sel))))
-            (t (entry-display-menu (car sel))))
-      )))
+            (t (entry-display-menu (car sel)))))))
 
 (defun password-store-insert (entry)
   (run-shell-command (format nil "pass generate -f ~A" entry) t))
@@ -129,5 +120,5 @@
   "Show all entries"
   (entries-menu (pass-entries)))
 
-(define-key *root-map* (kbd "s-p") "pass-otp")
-(define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")
+;; (define-key *root-map* (kbd "s-p") "pass-otp")
+;; (define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")

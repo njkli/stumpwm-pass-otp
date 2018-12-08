@@ -1,6 +1,6 @@
-(asdf:defsystem #:stumpwm-pass-otp
+(asdf:defsystem #:pass-otp
   :serial t
-  :description "Integrate 'pass' with StumpWM"
+  :description "passwordstore.org integration for StumpWM"
   :author "Voob of Doom <vod@njk.li>"
   :license "GPLv3"
   :depends-on (:stumpwm
@@ -9,9 +9,9 @@
                :cl-ppcre
                :cl-string-match
                :cl-hash-util
-               :cl-yaml
                :cl-one-time-passwords
                :assoc-utils
                :cl-base32)
-  :components ((:file "stumpwm-pass-otp")
-               (:file "password")))
+  :components ((:file "package")
+               (:file "pass-otp")
+               (:file "password-class")))
