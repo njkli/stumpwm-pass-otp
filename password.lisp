@@ -4,14 +4,25 @@
 (defun otpauth-to-hex (secret)
   (format nil "~{~2,'0x~}" (coerce (cl-base32:base32-to-bytes secret) 'list)))
 
+(defvar *autotype* (hash (":enter" "xdotool key Return")
+                         (":tab" "xdotool key Tab")
+                         (":space" "xdotool key space")))
+(defvar *xdotool-delay* 3)
+(defvar *autotype-delay* 5)
+
 (defclass password ()
   ((entry :accessor entry :type string :initarg :entry :initform (message "Must supply password entry"))
    raw
-   lines))
+   lines
+   autotype))
 
 (defmethod precache ((obj password))
   (setf (slot-value obj 'raw)
         (run-shell-command (format nil "pass show ~A" (entry obj)) t)
+
+        (slot-value obj 'autotype)
+        (field-for obj "autotype: (.*)")
+
         (slot-value obj 'lines)
         (cl-ppcre:split "\\n" (slot-value obj 'raw))))
 
@@ -26,14 +37,10 @@
                0
                )))
     (when sel
-      ;; TODO: check if clipboard-history module loaded before blatantly doing stuff to it
-      ;; clipboard-history uses polling, so what I do here is useless
-      ;; (clipboard-history:stop-clipboard-manager)
-      ;; (clipboard-history:start-clipboard-manager)
-      (set-x-selection (cond ((ppcre:scan ": " (car sel)) (ppcre:register-groups-bind (field)
+      (set-x-selection (cond ((cl-ppcre:scan ": " (car sel)) (cl-ppcre:register-groups-bind (field)
                                                               (": (.*)" (car sel) :sharedp t)
                                                             field))
-                              ((ppcre:scan "otpauth:" (car sel)) (otp obj))
+                              ((cl-ppcre:scan "otpauth:" (car sel)) (otp obj))
                               (t (car sel))) :clipboard))))
 
 (defmethod passwd ((obj password))
@@ -51,18 +58,37 @@
         (message (format nil "^B^1OTP undefined:~%^n~A" (entry obj))))))
 
 (defmethod field-for ((obj password) &rest regex)
-  (ppcre:register-groups-bind (field)
+  (cl-ppcre:register-groups-bind (field)
       ((car regex) (slot-value obj 'raw) :sharedp t)
     field))
 
+(defmethod autotype ((obj password))
+  (let ((at-seq (cl-ppcre:split " " (slot-value obj 'autotype)))
+        (xdt (format nil "xdotool type --delay ~A --clearmodifiers" *xdotool-delay*))
+        (cmds nil))
+    (dolist (at at-seq)
+      (cond ((hash-get *autotype* (list at))
+             (setf cmds (append cmds (list (hash-get *autotype* (list at))))))
+
+            ((field-for obj (format nil "~A: (.*)" at))
+             (setf cmds (append cmds (list (concat xdt " " (field-for obj (format nil "~A: (.*)" at))) ))))
+
+            ((cl-ppcre:scan ":otp" at)
+             (setf cmds (append cmds (list (concat xdt " " (otp obj))))))
+
+            ((cl-ppcre:scan ":delay" at)
+             (setf cmds (append cmds (list (format nil "sleep ~A" *autotype-delay*)))))
+
+            ((cl-ppcre:scan "pass" at)
+             (setf cmds (append cmds (list (concat xdt " " (passwd obj))))))
+
+            ((cl-ppcre:scan "user" at)
+             (setf cmds (append cmds (list (concat xdt " " (uname obj))))))
+
+            (t
+             (setf cmds (append cmds (list (concat xdt " " at)))))
+            ))
+    (run-shell-command (format nil "~{~a~^ && ~}" cmds))))
+
 (defmethod initialize-instance :after ((obj password) &key)
   (precache obj))
-
-#||
-(message (format nil "^B^1*Error In Command '^b~a^B': ^nOther shit" "some" ))
-
-;; working with the class
-(setf pass (make-instance 'password :entry "github.com/voipscout"))
-(setf pass (make-instance 'password :entry "icq.com/27708472"))
-
-||#

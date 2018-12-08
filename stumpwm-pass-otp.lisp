@@ -1,9 +1,11 @@
 (defpackage #:stumpwm-pass-otp
-  (:use #:cl #:listopia #:cl-string-match #:stumpwm)
+  (:use #:cl #:listopia #:cl-string-match #:stumpwm #:cl-hash-util)
   (:export *password-store-dir*
            *known-window-class-regex*
            *uri-regex*
            *pass-otp-map*
+           *autotype-delay*
+           *xdotool-delay*
            ;; pass-otp
            ;; pass-otp-show-all
            ))
@@ -17,13 +19,17 @@
 (defvar *uri-regex-scanner*
   (cl-ppcre:create-scanner *uri-regex* :multi-line-mode t :case-insensitive-mode t))
 
-(defvar *pass-otp-map* nil )
+(defvar *pass-otp-map* nil)
 ;; (when (null *stumpwm-pass-otp-map*)
 ;;   (setf *stumpwm-pass-otp-map*
 ;;         (let ((m (stumpwm:make-sparse-keymap)))
 ;;           (stumpwm:define-key m (stumpwm:kbd "M-o") (lambda (x) (print "Hello!")))
 ;;           m)
 ;;         ))
+
+(defun known-window-class-p ()
+  (let ((class (window-class (current-window))))
+    (if (cl-ppcre:scan *known-window-class-regex* class) t nil)))
 
 (defun pass-entries ()
   (let ((home-ns-len (length (namestring *password-store-dir*))))
@@ -43,10 +49,6 @@
   (let ((uri (cl-ppcre:scan-to-strings *uri-regex-scanner* window-title-str)))
     (quri:uri-domain (quri:uri uri))))
 
-(defun known-window-class-p ()
-  (let ((class (window-class (current-window))))
-    (if (cl-ppcre:scan *known-window-class-regex* class) t nil)))
-
 (defun format-menu (items)
   (mapcar (lambda (i) (list i i)) items))
 
@@ -60,13 +62,17 @@
   (let ((pass-obj (make-instance 'password :entry entry)))
     (display pass-obj)))
 
+(defun entry-autotype (entry)
+  (autotype (make-instance 'password :entry entry)))
+
 (defun entry-display-menu (entry)
   (let ((pass-obj (make-instance 'password :entry entry)))
     (display-menu pass-obj)))
 
 ;; FIXME: keymap in menu doesn't work for me, so these are here
 (defvar *entry-display* nil)
-(defvar *entry-autofill* nil)
+(defvar *entry-edit* nil)
+(defvar *entry-autotype* nil)
 
 (defun entries-menu (menu-list)
   (let ((sel (select-from-menu
@@ -77,20 +83,26 @@
               ;; FIXME: can't pass keymap directly here
               (let ((m (make-sparse-keymap)))
                 (define-key m (kbd "M-RET") (lambda (x)
-                                              (setf *entry-autofill* t)
+                                              (setf *entry-autotype* t)
                                               (menu-finish x)))
                 (define-key m (kbd "M-o") (lambda (x)
                                             (setf *entry-display* t)
                                             (menu-finish x)))
+                (define-key m (kbd "M-e") (lambda (x)
+                                            (setf *entry-edit* t)
+                                            (menu-finish x)))
                 m)
               )))
     (when sel
-      (cond (*entry-autofill* (progn
-                                (setf *entry-autofill* nil)
-                                (message "Autofill requested! ~A" (car sel))))
+      (cond (*entry-autotype* (progn
+                                (setf *entry-autotype* nil)
+                                (entry-autotype (car sel))))
             (*entry-display* (progn
                                (setf *entry-display* nil)
                                (entry-display (car sel))))
+            (*entry-edit* (progn
+                            (setf *entry-edit* nil)
+                            (entry-edit (car sel))))
             (t (entry-display-menu (car sel))))
       )))
 
@@ -104,12 +116,14 @@
         (password-store-insert (concat entry-url "/" entry-name))
         (run-commands "pass-otp")))))
 
+(defun entry-edit (entry)
+  (run-shell-command (format nil "pass edit ~A" entry)))
+
 (defcommand pass-otp () ()
   "Show entries for current window"
   (cond ((find-match) (entries-menu (find-match)))
         ((known-window-class-p) (entry-new-with-url))
-        (t (message "No match!")))
-  )
+        (t (message "No match!"))))
 
 (defcommand pass-otp-show-all () ()
   "Show all entries"
@@ -117,21 +131,3 @@
 
 (define-key *root-map* (kbd "s-p") "pass-otp")
 (define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")
-
-#||
-
-(password-store-insert "mytes.com/bullshit@user.cc" "somep")
-
-(defcommand pass-copy () ()
-"Put a password into the clipboard."
-(let ((entry (completing-read (current-screen)
-"entry: "
-(pass-entries))))
-(run-shell-command (format nil "pass -c ~a" entry))))
-
-(defcommand pass-generate () ()
-"Generate a password and put it into the clipboard"
-(let ((entry-name (read-one-line (stumpwm:current-screen)
-"entry name: ")))
-(stumpwm:run-shell-command (format nil "pass generate -c ~a" entry-name))))
-||#
