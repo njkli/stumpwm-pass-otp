@@ -1,21 +1,64 @@
 #+STARTUP: indent overview align fold nodlcheck hidestars oddeven lognotestate inlineimages
 * stumpwm pass-otp
 pass-otp helper for StumpWM
+Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen most of the readme from, thanks!
 ** Features
-- Window recognition
-- Autofill
+- Open URLs of entries with hotkey
+- Add new Entries to Password Storage
+- Edit existing Entries
+- Generate new passwords for entries
+- Inline view, which can copy/type individual entries
+- Move/Delete existing entries
+- Support for different password stores (roots), e.g. to separate passwords for work from private passwords
+- Type any field from entry
+- Auto-typing of user and/or password fields.
+- The format for password files should look like:
+  #+BEGIN_SRC text
+    foobarmysecurepassword
+    user: MyUser
+    url: http://my.url.foo
+  #+END_SRC
+- Auto-typing of more than one field, using the `autotype` entry:
+  #+BEGIN_SRC text
+    foobarmysecurepassword
+    ---
+    user: MyUser
+    SomeField: foobar
+    AnotherField: barfoo
+    url: http://my.url.foo
+    autotype: SomeField :tab user any-string-at-all :tab AnotherField :tab pass
+  #+END_SRC
+
+  Use ~:tab~, ~:enter~, ~:space~, ~:delay~, ~:otp~ here to type Tab,
+  Enter, Space, Delay or OTP (useful for toggling checkboxes) respectively.
+  ~:delay~ will trigger a delay (2 seconds by default).
+
+  Anything else will be typed verbatim as-is.
+
+  Generating OTPs.
+  The format for OTPs should be `pass-otp(1)`-compatible ~otpauth://[...]~
+
+- All hotkeys are configurable
+- The field names for `user`, `url` and `autotype` are configurable
+- Bookmarks mode (open stored URLs in browser, default: Alt+x)
+- Share common used passwords between several entries (with different URLs, usernames etc)
+- Window recognition regex
 ** Dependencies
-- xdotool
+- [[https://github.com/jordansissel/xdotool][xdotool]]
+  It sends individual keys, as can be seen here:
+  https://github.com/jordansissel/xdotool/blob/08c8e2d6cad60a69ce415499e34865157a1b66fd/xdo.c#L958
+  recreating it with cl-xlib is pointless, let's use this excellent tool instead!
 - [[https://www.passwordstore.org/][pass]]
-- pass-otp
 - [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]]/[[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][chromium]] plugins to have url in title
 ** Usage
 #+BEGIN_SRC lisp
   (setf pass-otp:*password-store-dir* (merge-pathnames #p".password-store/" (user-homedir-pathname))
-        ,*known-window-class-regex* "Firefox|Chromium"
-        ,*uri-regex* "(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])"
-        ,*xdotool-delay* 3
-        ,*autotype-delay* 5)
+        pass-otp:*known-window-class-regex* "Firefox|Chromium"
+        pass-otp:*uri-regex* "(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#\/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#\/%=~_|$?!:,.]*\)|[A-Z0-9+&@#\/%=~_|$])"
+        pass-otp:*xdotool-delay* 3
+        pass-otp:*autotype-delay* 5
+        ;; Depending on amount of records, menu could get rather lengthy
+        setf *menu-maximum-height* 16)
 
   (define-key *root-map* (kbd "s-p") "pass-otp")
   (define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")
