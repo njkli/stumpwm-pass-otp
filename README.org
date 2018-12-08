@@ -31,7 +31,7 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
 
   Use ~:tab~, ~:enter~, ~:space~, ~:delay~, ~:otp~ here to type Tab,
   Enter, Space, Delay or OTP (useful for toggling checkboxes) respectively.
-  ~:delay~ will trigger a delay (2 seconds by default).
+  ~:delay~ will trigger a delay (5 seconds by default).
 
   Anything else will be typed verbatim as-is.
 
