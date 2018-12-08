@@ -2,6 +2,8 @@
 * stumpwm pass-otp
 pass-otp helper for StumpWM
 Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen most of the readme from, thanks!
+- Why?
+  For some strange reason, rofi-pass didn't work for my setup, the ~:otp~ was never autotyped, instead of debugging (which should have been trivial, with rofi-pass being a bash script), it was decided to have a StumpWM 'native' version built.
 ** Features
 - Open URLs of entries with hotkey
 - Add new Entries to Password Storage
@@ -33,11 +35,10 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
   Enter, Space, Delay or OTP (useful for toggling checkboxes) respectively.
   ~:delay~ will trigger a delay (5 seconds by default).
 
-  Anything else will be typed verbatim as-is.
+  Anything else will be typed verbatim as-is, like the ~any-string-at-all~ string in the example above.
 
   Generating OTPs.
-  The format for OTPs should be `pass-otp(1)`-compatible ~otpauth://[...]~
-
+  The format for OTPs should be ~pass-otp(1)~-[[https://github.com/google/google-authenticator/wiki/Key-Uri-Format][compatible]] ~otpauth://[...]~
 - All hotkeys are configurable
 - The field names for `user`, `url` and `autotype` are configurable
 - Bookmarks mode (open stored URLs in browser, default: Alt+x)
