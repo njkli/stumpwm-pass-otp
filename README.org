@@ -1,8 +1,10 @@
 #+STARTUP: indent overview align fold nodlcheck hidestars oddeven lognotestate inlineimages
 * stumpwm pass-otp
 pass-otp helper for StumpWM
+
 Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen most of the readme from, thanks!
 - Why?
+
   For some strange reason, rofi-pass didn't work for my setup, the ~:otp~ was never autotyped, instead of debugging (which should have been trivial, with rofi-pass being a bash script), it was decided to have a StumpWM 'native' version built.
 ** Features
 - Open URLs of entries with hotkey
@@ -47,7 +49,9 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
 ** Dependencies
 - [[https://github.com/jordansissel/xdotool][xdotool]]
   It sends individual keys, as can be seen here:
+
   https://github.com/jordansissel/xdotool/blob/08c8e2d6cad60a69ce415499e34865157a1b66fd/xdo.c#L958
+
   recreating it with cl-xlib is pointless, let's use this excellent tool instead!
 - [[https://www.passwordstore.org/][pass]]
 - [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]]/[[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][chromium]] plugins to have url in title
