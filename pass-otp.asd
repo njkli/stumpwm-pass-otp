@@ -1,6 +1,6 @@
 (asdf:defsystem #:pass-otp
   :serial t
-  :description "passwordstore.org integration for StumpWM"
+  :description "passwordstore.org for StumpWM"
   :author "Voob of Doom <vod@njk.li>"
   :license "GPLv3"
   :depends-on (:stumpwm

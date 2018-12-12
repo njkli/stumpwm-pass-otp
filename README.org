@@ -52,15 +52,15 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
 - [[https://www.passwordstore.org/][pass]]
 - [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]]/[[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][chromium]] plugins to have url in title
 ** Usage
-Most of the settings have sane defaults, so this should suffice:
+Most of the settings have sane defaults, that's about enough:
 #+BEGIN_SRC lisp
   ;; I find this useful in general
   (setf *menu-maximum-height* 16)
 
+  (load-module "pass-otp")
   (define-key *root-map* (kbd "s-p") "pass-otp")
   (define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")
 #+END_SRC
-
 Full version:
 #+BEGIN_SRC lisp
   (setf pass-otp:*password-store-dir* (merge-pathnames #p".password-store/" (user-homedir-pathname))
@@ -84,7 +84,7 @@ Full version:
                               m)
 
         ;; Depending on amount of records, menu could get rather lengthy
-        setf *menu-maximum-height* 16)
+        ,*menu-maximum-height* 16)
 
   (define-key *root-map* (kbd "s-p") "pass-otp")
   (define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")
