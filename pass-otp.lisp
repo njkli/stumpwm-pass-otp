@@ -85,7 +85,7 @@
 (when (null *pass-otp-menu-map*)
   (setf *pass-otp-menu-map*
         (let ((m (make-sparse-keymap)))
-          (define-key m (kbd "M-RET") (pass-menu-action :entry-autotype))
+          (define-key m (kbd "M-RET") (entry-menu-action :entry-autotype))
           (define-key m (kbd "M-o") (entry-menu-action :entry-display))
           (define-key m (kbd "M-e") (entry-menu-action :entry-edit))
           (define-key m (kbd "M-n") (entry-menu-action :entry-create))
