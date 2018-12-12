@@ -52,7 +52,7 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
 - [[https://www.passwordstore.org/][pass]]
 - [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]]/[[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][chromium]] plugins to have url in title
 ** Usage
-Most of the settings have sane defaults, suffices:
+Most of the settings have sane defaults, sufficient:
 #+BEGIN_SRC lisp
   ;; I find this useful in general
   (setf *menu-maximum-height* 16)
