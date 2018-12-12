@@ -81,6 +81,12 @@
   (let ((pass-obj (make-instance 'password :entry entry)))
     (display-menu pass-obj)))
 
+(defun entry-menu-action (action-type)
+  (lambda (menu)
+    (throw :menu-quit
+      (values action-type
+              (nth #Dmenu.selected #Dmenu.table)))))
+
 (defvar *pass-otp-menu-map* nil)
 (when (null *pass-otp-menu-map*)
   (setf *pass-otp-menu-map*
@@ -93,11 +99,6 @@
           (define-key m (kbd "RET") (entry-menu-action :entry-menu))
           m)))
 
-(defun entry-menu-action (action-type)
-  (lambda (menu)
-    (throw :menu-quit
-      (values action-type
-              (nth #Dmenu.selected #Dmenu.table)))))
 
 (defun entries-menu (menu-list)
   (multiple-value-bind (action choice)
