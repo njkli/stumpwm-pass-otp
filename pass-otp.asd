@@ -11,6 +11,7 @@
                :cl-hash-util
                :cl-one-time-passwords
                :assoc-utils
+               :access
                :cl-base32)
   :components ((:file "package")
                (:file "pass-otp")

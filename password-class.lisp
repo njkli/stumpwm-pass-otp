@@ -5,6 +5,9 @@
                          (":tab" "xdotool key Tab")
                          (":space" "xdotool key space")))
 
+(defvar *default-browser* nil)
+(when (null *default-browser*) (setf *default-browser* "firefox"))
+
 (defvar *xdotool-delay* nil)
 (when (null *xdotool-delay*) (setf *xdotool-delay* 3))
 
@@ -53,6 +56,15 @@
 (defmethod uname ((obj password))
   (let ((defined (field-for obj "username: (.*)")))
     (if defined defined (car (last (cl-ppcre:split "/" (entry obj)))))))
+
+(defmethod url ((obj password))
+  (let ((defined (field-for obj "url: (.*)")))
+    (if defined
+        defined
+        (let ((obj-path (cl-ppcre:split "/" (entry obj)))
+              (from-path nil))
+          (setf from-path (nth (- (length obj-path) 2) obj-path))
+          (quri:render-uri (quri.uri.http:make-uri-https :host from-path))))))
 
 (defmethod otp ((obj password))
   (let ((defined (field-for obj "(otpauth:.*)")))

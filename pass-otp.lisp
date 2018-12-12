@@ -1,4 +1,5 @@
 (in-package #:pass-otp)
+(access:enable-dot-syntax)
 
 (defvar *password-store-dir* nil)
 (when (null *password-store-dir*) (setf *password-store-dir* (merge-pathnames #p".password-store/" (user-homedir-pathname))))
@@ -43,72 +44,80 @@
         (matches (domain title))
         nil)))
 
-(defun entry-display (entry)
-  (let ((pass-obj (make-instance 'password :entry entry)))
-    (display pass-obj)))
-
-(defun entry-autotype (entry)
-  (autotype (make-instance 'password :entry entry)))
-
-(defun entry-display-menu (entry)
-  (let ((pass-obj (make-instance 'password :entry entry)))
-    (display-menu pass-obj)))
-
-;; FIXME: keymap in menu doesn't work for me, so these are here
-(defvar *entry-display* nil)
-(defvar *entry-edit* nil)
-(defvar *entry-autotype* nil)
-;; instead of that:
-(defvar *pass-otp-map* nil)
-;; (when (null *pass-otp-map*)
-;;   (setf *pass-otp-map*
-;;         (let ((m (make-sparse-keymap)))
-;;           (define-key m (kbd "M-o") (lambda (x) (print "Hello!")))
-;;           m)
-;;         ))
-
-(defun entries-menu (menu-list)
-  (let ((sel (select-from-menu
-              (current-screen)
-              (format-menu menu-list)
-              nil
-              0
-              ;; FIXME: can't pass keymap directly here, why?
-              (let ((m (make-sparse-keymap)))
-                (define-key m (kbd "M-RET") (lambda (x)
-                                              (setf *entry-autotype* t)
-                                              (menu-finish x)))
-                (define-key m (kbd "M-o") (lambda (x)
-                                            (setf *entry-display* t)
-                                            (menu-finish x)))
-                (define-key m (kbd "M-e") (lambda (x)
-                                            (setf *entry-edit* t)
-                                            (menu-finish x)))
-                m))))
-    (when sel
-      (cond (*entry-autotype* (progn
-                                (setf *entry-autotype* nil)
-                                (entry-autotype (car sel))))
-            (*entry-display* (progn
-                               (setf *entry-display* nil)
-                               (entry-display (car sel))))
-            (*entry-edit* (progn
-                            (setf *entry-edit* nil)
-                            (entry-edit (car sel))))
-            (t (entry-display-menu (car sel)))))))
-
 (defun password-store-insert (entry)
   (run-shell-command (format nil "pass generate -f ~A" entry) t))
 
-(defun entry-new-with-url ()
+(defun entry-create-with-url ()
   (let ((entry-url (domain (window-title (current-window)))  ))
     (let ((entry-name (read-one-line (current-screen) (format nil "New entry for ~A/" entry-url))))
       (when entry-name
         (password-store-insert (concat entry-url "/" entry-name))
         (run-commands "pass-otp")))))
 
+(defun entry-create ()
+  (let ((entry-name (read-one-line (current-screen) (format nil "New entry for: "))))
+    (when entry-name
+      (password-store-insert  entry-name)
+      (run-commands "pass-otp-show-all"))))
+
+(defun entry-display (entry)
+  (let ((pass-obj (make-instance 'password :entry entry)))
+    (display pass-obj)))
+
+(defun entry-open-url (entry)
+  (let ((pass-obj (make-instance 'password :entry entry)))
+   (run-shell-command (format nil "xdg-open ~A" (url pass-obj)))))
+
 (defun entry-edit (entry)
   (run-shell-command (format nil "pass edit ~A" entry)))
+
+(defun entry-autotype (entry)
+  (setf *entry-autotype* nil)
+  (autotype (make-instance 'password :entry entry)))
+
+(defun entry-display-menu (entry)
+  (let ((pass-obj (make-instance 'password :entry entry)))
+    (display-menu pass-obj)))
+
+(defvar *pass-otp-menu-map* nil)
+(when (null *pass-otp-menu-map*)
+  (setf *pass-otp-menu-map*
+        (let ((m (make-sparse-keymap)))
+          (define-key m (kbd "M-RET") (pass-menu-action :entry-autotype))
+          (define-key m (kbd "M-o") (entry-menu-action :entry-display))
+          (define-key m (kbd "M-e") (entry-menu-action :entry-edit))
+          (define-key m (kbd "M-n") (entry-menu-action :entry-create))
+          (define-key m (kbd "C-RET") (entry-menu-action :entry-open-url))
+          (define-key m (kbd "RET") (entry-menu-action :entry-menu))
+          m)))
+
+(defun entry-menu-action (action-type)
+  (lambda (menu)
+    (throw :menu-quit
+      (values action-type
+              (nth #Dmenu.selected #Dmenu.table)))))
+
+(defun entries-menu (menu-list)
+  (multiple-value-bind (action choice)
+      (select-from-menu
+       (current-screen)
+       (format-menu menu-list)
+       nil
+       0
+       *pass-otp-menu-map*)
+    (case action
+      (:entry-autotype
+       (entry-autotype (car choice)))
+      (:entry-display
+       (entry-display (car choice)))
+      (:entry-edit
+       (entry-edit (car choice)))
+      (:entry-create
+       (entry-create))
+      (:entry-open-url
+       (entry-open-url (car choice)))
+      (:entry-menu
+       (entry-display-menu (car choice))))))
 
 (defcommand pass-otp () ()
   "Show entries for current window"

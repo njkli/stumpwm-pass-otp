@@ -3,6 +3,7 @@
   (:export *password-store-dir*
            *known-window-class-regex*
            *uri-regex*
-           *pass-otp-map*
+           *pass-otp-menu-map*
            *xdotool-delay*
-           *autotype-delay*))
+           *autotype-delay*
+           *default-browser*))

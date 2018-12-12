@@ -9,11 +9,9 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
 ** Features
 - Open URLs of entries with hotkey
 - Add new Entries to Password Storage
-- Edit existing Entries
-- Generate new passwords for entries
+- Edit existing Entries (Emacs pass.el is a nice interface)
 - Inline view, which can copy/type individual entries
-- Move/Delete existing entries
-- Support for different password stores (roots), e.g. to separate passwords for work from private passwords
+- TODO Support for different password stores (roots), e.g. to separate passwords for work from private passwords
 - Type any field from entry
 - Auto-typing of user and/or password fields.
 - The format for password files should look like:
@@ -41,10 +39,8 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
 
   Generating OTPs.
   The format for OTPs should be ~pass-otp(1)~-[[https://github.com/google/google-authenticator/wiki/Key-Uri-Format][compatible]] ~otpauth://[...]~
-- All hotkeys are configurable
-- The field names for `user`, `url` and `autotype` are configurable
+- TODO The field names for `user`, `url` and `autotype` are configurable
 - Bookmarks mode (open stored URLs in browser, default: Alt+x)
-- Share common used passwords between several entries (with different URLs, usernames etc)
 - Window recognition regex
 ** Dependencies
 - [[https://github.com/jordansissel/xdotool][xdotool]]
@@ -53,6 +49,7 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
   https://github.com/jordansissel/xdotool/blob/08c8e2d6cad60a69ce415499e34865157a1b66fd/xdo.c#L958
 
   recreating it with cl-xlib is pointless, let's use this excellent tool instead!
+- [[https://github.com/freedesktop/xdg-utils][xdg-open from xdg-utils]]
 - [[https://www.passwordstore.org/][pass]]
 - [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]]/[[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][chromium]] plugins to have url in title
 ** Usage
