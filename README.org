@@ -39,15 +39,17 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
 - The field names for user, url and autotype are configurable
 
 - Generating OTPs.
+
   The format for OTPs should be ~pass-otp(1)~-[[https://github.com/google/google-authenticator/wiki/Key-Uri-Format][compatible]] ~otpauth://[...]~
 - Window recognition regex
 ** Dependencies
 - [[https://github.com/jordansissel/xdotool][xdotool]]
+
   It sends individual keys, as can be seen here:
 
   https://github.com/jordansissel/xdotool/blob/08c8e2d6cad60a69ce415499e34865157a1b66fd/xdo.c#L958
 
-  recreating it with cl-xlib is pointless, let's use this excellent tool instead!
+  recreating it with cl-xlib is pointless
 - [[https://github.com/freedesktop/xdg-utils][xdg-open from xdg-utils]]
 - [[https://www.passwordstore.org/][pass]]
 - [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]]/[[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][chromium]] plugins to have url in title
