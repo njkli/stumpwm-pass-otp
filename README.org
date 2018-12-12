@@ -37,10 +37,9 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
 
   Anything else will be typed verbatim as-is, like the ~any-string-at-all~ string in the example above.
 - The field names for user, url and autotype are configurable
-  Generating OTPs.
+
+- Generating OTPs.
   The format for OTPs should be ~pass-otp(1)~-[[https://github.com/google/google-authenticator/wiki/Key-Uri-Format][compatible]] ~otpauth://[...]~
-- TODO The field names for `user`, `url` and `autotype` are configurable
-- Bookmarks mode (open stored URLs in browser, default: Alt+x)
 - Window recognition regex
 ** Dependencies
 - [[https://github.com/jordansissel/xdotool][xdotool]]
@@ -53,6 +52,16 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
 - [[https://www.passwordstore.org/][pass]]
 - [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]]/[[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][chromium]] plugins to have url in title
 ** Usage
+Most of the settings have sane defaults, so this should suffice:
+#+BEGIN_SRC lisp
+  ;; I find this useful in general
+  (setf *menu-maximum-height* 16)
+
+  (define-key *root-map* (kbd "s-p") "pass-otp")
+  (define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")
+#+END_SRC
+
+Full version:
 #+BEGIN_SRC lisp
   (setf pass-otp:*password-store-dir* (merge-pathnames #p".password-store/" (user-homedir-pathname))
         pass-otp:*known-window-class-regex* "Firefox|Chromium"
