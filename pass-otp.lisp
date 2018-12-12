@@ -55,10 +55,12 @@
         (run-commands "pass-otp")))))
 
 (defun entry-create ()
-  (let ((entry-name (read-one-line (current-screen) (format nil "New entry for: "))))
-    (when entry-name
-      (password-store-insert  entry-name)
-      (run-commands "pass-otp-show-all"))))
+  (cond ((known-window-class-p) (entry-create-with-url))
+        (t
+         (let ((entry-name (read-one-line (current-screen) (format nil "New entry for: "))))
+           (when entry-name
+             (password-store-insert entry-name)
+             (run-commands "pass-otp-show-all"))))))
 
 (defun entry-display (entry)
   (let ((pass-obj (make-instance 'password :entry entry)))
@@ -122,12 +124,9 @@
 (defcommand pass-otp () ()
   "Show entries for current window"
   (cond ((find-match) (entries-menu (find-match)))
-        ((known-window-class-p) (entry-new-with-url))
-        (t (message "No match!"))))
+        ((known-window-class-p) (entry-create-with-url))
+        (t (entries-menu (pass-entries)))))
 
 (defcommand pass-otp-show-all () ()
   "Show all entries"
   (entries-menu (pass-entries)))
-
-;; (define-key *root-map* (kbd "s-p") "pass-otp")
-;; (define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")

@@ -5,14 +5,29 @@
                          (":tab" "xdotool key Tab")
                          (":space" "xdotool key space")))
 
-(defvar *default-browser* nil)
-(when (null *default-browser*) (setf *default-browser* "firefox"))
+(defvar *autotype-regex-username* nil)
+(when (null *autotype-regex-username*) (setf *autotype-regex-username* "user"))
+
+(defvar *autotype-regex-password* nil)
+(when (null *autotype-regex-password*) (setf *autotype-regex-password* "pass"))
+
+(defvar *field-regex-username* nil)
+(when (null *field-regex-username*) (setf *field-regex-username* "username: (.*)"))
+
+(defvar *field-regex-url* nil)
+(when (null *field-regex-url*) (setf *field-regex-url* "url: (.*)"))
+
+(defvar *field-regex-autotype* nil)
+(when (null *field-regex-autotype*) (setf *field-regex-autotype* "autotype: (.*)"))
 
 (defvar *xdotool-delay* nil)
 (when (null *xdotool-delay*) (setf *xdotool-delay* 3))
 
 (defvar *autotype-delay* nil)
 (when (null *autotype-delay*) (setf *autotype-delay* 5))
+
+(defvar *autotype-default* nil)
+(when (null *autotype-default*) (setf *autotype-default* "user :tab pass :enter"))
 
 (defun otpauth-to-hex (secret)
   (format nil "~{~2,'0x~}" (coerce (cl-base32:base32-to-bytes secret) 'list)))
@@ -28,7 +43,7 @@
         (run-shell-command (format nil "pass show ~A" (entry obj)) t)
 
         (slot-value obj 'autotype)
-        (field-for obj "autotype: (.*)")
+        (or (field-for obj *field-regex-autotype*) *autotype-default*)
 
         (slot-value obj 'lines)
         (cl-ppcre:split "\\n" (slot-value obj 'raw))))
@@ -40,9 +55,8 @@
   (let  ((sel (select-from-menu
                (current-screen)
                (format-menu (slot-value obj 'lines))
-               "set-x-selection:"
-               0
-               )))
+               "set-x-selection ': (.*)'"
+               0)))
     (when sel
       (set-x-selection (cond ((cl-ppcre:scan ": " (car sel)) (cl-ppcre:register-groups-bind (field)
                                                               (": (.*)" (car sel) :sharedp t)
@@ -54,11 +68,11 @@
  (car (slot-value obj 'lines)))
 
 (defmethod uname ((obj password))
-  (let ((defined (field-for obj "username: (.*)")))
+  (let ((defined (field-for obj *field-regex-username*)))
     (if defined defined (car (last (cl-ppcre:split "/" (entry obj)))))))
 
 (defmethod url ((obj password))
-  (let ((defined (field-for obj "url: (.*)")))
+  (let ((defined (field-for obj *field-regex-url*)))
     (if defined
         defined
         (let ((obj-path (cl-ppcre:split "/" (entry obj)))
@@ -84,26 +98,26 @@
         (cmds nil))
     (dolist (at at-seq)
       (cond ((hash-get *autotype* (list at))
-             (setf cmds (append cmds (list (hash-get *autotype* (list at))))))
-
+             (setf cmds (append cmds
+                                (list (hash-get *autotype* (list at))))))
             ((field-for obj (format nil "~A: (.*)" at))
-             (setf cmds (append cmds (list (concat xdt " " (field-for obj (format nil "~A: (.*)" at))) ))))
-
+             (setf cmds (append cmds
+                                (list (concat xdt " " (field-for obj (format nil "~A: (.*)" at)))))))
             ((cl-ppcre:scan ":otp" at)
-             (setf cmds (append cmds (list (concat xdt " " (otp obj))))))
-
+             (setf cmds (append cmds
+                                (list (concat xdt " " (otp obj))))))
             ((cl-ppcre:scan ":delay" at)
-             (setf cmds (append cmds (list (format nil "sleep ~A" *autotype-delay*)))))
-
-            ((cl-ppcre:scan "pass" at)
-             (setf cmds (append cmds (list (concat xdt " " (passwd obj))))))
-
-            ((cl-ppcre:scan "user" at)
-             (setf cmds (append cmds (list (concat xdt " " (uname obj))))))
-
+             (setf cmds (append cmds
+                                (list (format nil "sleep ~A" *autotype-delay*)))))
+            ((cl-ppcre:scan *autotype-regex-password* at)
+             (setf cmds (append cmds
+                                (list (concat xdt " " (passwd obj))))))
+            ((cl-ppcre:scan *autotype-regex-username* at)
+             (setf cmds (append cmds
+                                (list (concat xdt " " (uname obj))))))
             (t
-             (setf cmds (append cmds (list (concat xdt " " at)))))
-            ))
+             (setf cmds (append cmds
+                                (list (concat xdt " " at)))))))
     (run-shell-command (format nil "~{~a~^ && ~}" cmds))))
 
 (defmethod initialize-instance :after ((obj password) &key)
