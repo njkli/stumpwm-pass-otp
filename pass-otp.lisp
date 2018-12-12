@@ -99,7 +99,6 @@
           (define-key m (kbd "RET") (entry-menu-action :entry-menu))
           m)))
 
-
 (defun entries-menu (menu-list)
   (multiple-value-bind (action choice)
       (select-from-menu

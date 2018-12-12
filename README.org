@@ -2,6 +2,8 @@
 * stumpwm pass-otp
 pass-otp helper for StumpWM
 
+*DO NOT USE* - this code is intended to be submitted to stumpwm-contrib repo at some point in time. Feel free to PR or educate me on lisp in the issues. Currently it ~works for me(tm)~.
+
 Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen most of the readme from, thanks!
 - Why?
 
