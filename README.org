@@ -52,7 +52,7 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
 - [[https://www.passwordstore.org/][pass]]
 - [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]]/[[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][chromium]] plugins to have url in title
 ** Usage
-Most of the settings have sane defaults, that's about enough:
+Most of the settings have sane defaults, suffices:
 #+BEGIN_SRC lisp
   ;; I find this useful in general
   (setf *menu-maximum-height* 16)
@@ -61,7 +61,7 @@ Most of the settings have sane defaults, that's about enough:
   (define-key *root-map* (kbd "s-p") "pass-otp")
   (define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")
 #+END_SRC
-Full version:
+Or tweak:
 #+BEGIN_SRC lisp
   (setf pass-otp:*password-store-dir* (merge-pathnames #p".password-store/" (user-homedir-pathname))
         pass-otp:*known-window-class-regex* "Firefox|Chromium"
@@ -74,20 +74,14 @@ Full version:
         pass-otp:*field-regex-username* "username: (.*)"
         pass-otp:*field-regex-autotype* "autotype: (.*)"
         pass-otp:*field-regex-url* "url: (.*)"
-        ,*pass-otp-menu-map* (let ((m (make-sparse-keymap)))
+        pass-otp:*pass-otp-menu-map* (let ((m (make-sparse-keymap)))
                               (define-key m (kbd "M-RET") (pass-otp:entry-menu-action :entry-autotype))
                               (define-key m (kbd "M-o") (pass-otp:entry-menu-action :entry-display))
                               (define-key m (kbd "M-e") (pass-otp:entry-menu-action :entry-edit))
                               (define-key m (kbd "M-n") (pass-otp:entry-menu-action :entry-create))
                               (define-key m (kbd "C-RET") (pass-otp:entry-menu-action :entry-open-url))
                               (define-key m (kbd "RET") (pass-otp:entry-menu-action :entry-menu))
-                              m)
-
-        ;; Depending on amount of records, menu could get rather lengthy
-        ,*menu-maximum-height* 16)
-
-  (define-key *root-map* (kbd "s-p") "pass-otp")
-  (define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")
+                              m))
 #+END_SRC
 ** TODO:
 - qr otp with screenshot shennanigans
