@@ -1,6 +1,8 @@
 (in-package #:pass-otp)
 (access:enable-dot-syntax)
 
+(defvar *password-store-locked-p* t)
+
 (defvar *password-store-dir* nil)
 (when (null *password-store-dir*) (setf *password-store-dir* (merge-pathnames #p".password-store/" (user-homedir-pathname))))
 
@@ -120,6 +122,14 @@
        (entry-open-url (car choice)))
       (:entry-menu
        (entry-display-menu (car choice))))))
+
+;; TODO: force pin entry dialog, if keys are locked
+;; That doesn't work though, it hangs without asking for pin
+;; (defun handle-pin-entry ()
+;;     (run-shell-command (format nil "pass show ~A" (car (pass-entries))))
+;;     (setf *password-store-locked-p* nil))
+
+;; (*password-store-locked-p* (handle-pin-entry))
 
 (defcommand pass-otp () ()
   "Show entries for current window"

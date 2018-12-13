@@ -12,7 +12,11 @@
                :cl-one-time-passwords
                :assoc-utils
                :access
-               :cl-base32)
+               :cl-base32
+               :cffi
+               :usocket-server
+               :percent-encoding)
   :components ((:file "package")
                (:file "pass-otp")
-               (:file "password-class")))
+               (:file "password-class")
+               (:file "pinentry")))

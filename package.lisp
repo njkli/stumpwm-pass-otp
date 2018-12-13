@@ -12,4 +12,6 @@
            *field-regex-autotype*
            *field-regex-url*
            *pass-otp-menu-map*
+           *pinentry-listen-address*
+           *pinentry-listen-port*
            entry-menu-action))

@@ -9,6 +9,7 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
 
   For some strange reason, rofi-pass didn't work for my setup, the ~:otp~ was never autotyped, instead of debugging (which should have been trivial, with rofi-pass being a bash script), it was decided to have a StumpWM 'native' version built.
 ** Features
+- Includes pinentry handler (stolen from stumpwm-contrib, needed configurable port/host setts)
 - Open URLs of entries with hotkey
 - Add new Entries to Password Storage
 - Edit existing Entries (Emacs pass.el is a nice interface)
@@ -61,7 +62,9 @@ Most of the settings have sane defaults, sufficient:
   ;; I find this useful in general
   (setf *menu-maximum-height* 16)
 
-  (load-module "pass-otp")
+  (push "/some/path/stumpwm-pass-otp/" asdf:*central-registry*)
+  (ql:quickload :pass-otp)
+
   (define-key *root-map* (kbd "s-p") "pass-otp")
   (define-key *root-map* (kbd "C-s-p") "pass-otp-show-all")
 #+END_SRC
@@ -77,6 +80,8 @@ Or tweak:
         pass-otp:*autotype-regex-password* "pass"
         pass-otp:*field-regex-username* "username: (.*)"
         pass-otp:*field-regex-autotype* "autotype: (.*)"
+        pass-otp:*pinentry-listen-address* "127.0.0.1"
+        pass-otp:*pinentry-listen-port* 65530
         pass-otp:*field-regex-url* "url: (.*)"
         pass-otp:*pass-otp-menu-map* (let ((m (make-sparse-keymap)))
                               (define-key m (kbd "M-RET") (pass-otp:entry-menu-action :entry-autotype))
@@ -89,3 +94,4 @@ Or tweak:
 #+END_SRC
 ** TODO:
 - qr otp with screenshot shennanigans
+- FIXME: gpg piv (ie. yubikey) will timeout on pin-entry
