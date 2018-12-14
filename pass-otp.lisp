@@ -1,6 +1,12 @@
 (in-package #:pass-otp)
 (access:enable-dot-syntax)
 
+
+(define-condition url-not-found-in-window-title (simple-error)
+  ()
+  (:report (lambda (c str)
+             (format str "Known window class, but URL could not be parsed!"))))
+
 (defvar *password-store-locked-p* t)
 
 (defvar *password-store-dir* nil)
@@ -35,7 +41,9 @@
 
 (defun domain (window-title-str)
   (let ((uri (cl-ppcre:scan-to-strings *uri-regex-scanner* window-title-str)))
-    (quri:uri-domain (quri:uri uri))))
+    ;; TODO: url-not-found-in-window-title
+    (quri:uri-domain (quri:uri uri))
+    ))
 
 (defun format-menu (items)
   (mapcar (lambda (i) (list i i)) items))
@@ -76,8 +84,10 @@
   (run-shell-command (format nil "pass edit ~A" entry)))
 
 (defun entry-autotype (entry)
-  (setf *entry-autotype* nil)
   (autotype (make-instance 'password :entry entry)))
+
+(defun entry-qr-code (entry)
+  (qr-code (make-instance 'password :entry entry)))
 
 (defun entry-display-menu (entry)
   (let ((pass-obj (make-instance 'password :entry entry)))
@@ -98,6 +108,7 @@
           (define-key m (kbd "M-e") (entry-menu-action :entry-edit))
           (define-key m (kbd "M-n") (entry-menu-action :entry-create))
           (define-key m (kbd "C-RET") (entry-menu-action :entry-open-url))
+          (define-key m (kbd "M-q") (entry-menu-action :entry-qr-code))
           (define-key m (kbd "RET") (entry-menu-action :entry-menu))
           m)))
 
@@ -120,6 +131,8 @@
        (entry-create))
       (:entry-open-url
        (entry-open-url (car choice)))
+      (:entry-qr-code
+       (entry-qr-code (car choice)))
       (:entry-menu
        (entry-display-menu (car choice))))))
 

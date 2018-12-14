@@ -55,7 +55,7 @@
   (let  ((sel (select-from-menu
                (current-screen)
                (format-menu (slot-value obj 'lines))
-               "set-x-selection ': (.*)'"
+               (format nil " [ ~A ]" (slot-value obj 'entry))
                0)))
     (when sel
       (set-x-selection (cond ((cl-ppcre:scan ": " (car sel)) (cl-ppcre:register-groups-bind (field)
@@ -85,7 +85,9 @@
     (if defined
         (let ((secret (assoc-utils:aget (quri:uri-query-params (quri:uri defined)) "secret")))
           (write-to-string (cl-totp:totp (otpauth-to-hex secret))))
-        (message (format nil "^B^1OTP undefined:~%^n~A" (entry obj))))))
+        nil)))
+
+;; (message (format nil "^B^1OTP undefined:~%^n~A" (entry obj))  )
 
 (defmethod field-for ((obj password) &rest regex)
   (cl-ppcre:register-groups-bind (field)
@@ -119,6 +121,20 @@
              (setf cmds (append cmds
                                 (list (concat xdt " " at)))))))
     (run-shell-command (format nil "~{~a~^ && ~}" cmds))))
+
+(defmethod qr-code-show ((obj password))
+  (run-shell-command (format nil "pass otp uri -q ~A" (entry obj))))
+
+(defmethod qr-code-generate ((obj password))
+  (let ((fn (concat (getenv "XDG_RUNTIME_DIR") "/qr.png")))
+    (run-commands (format nil "screenshot-window ~A" fn))
+    (run-shell-command (format nil "zbarimg -q --raw ~A | pass otp append ~A && rm -rf ~A" fn (entry obj) fn))))
+
+(defmethod qr-code ((obj password))
+  (let ((otp (otp obj)))
+    (if otp
+        (qr-code-show obj)
+        (qr-code-generate obj))))
 
 (defmethod initialize-instance :after ((obj password) &key)
   (precache obj))
