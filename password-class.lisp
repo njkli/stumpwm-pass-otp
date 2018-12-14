@@ -29,6 +29,14 @@
 (defvar *autotype-default* nil)
 (when (null *autotype-default*) (setf *autotype-default* "user :tab pass :enter"))
 
+(defvar *pass-otp-entry-menu-map* nil)
+(when (null *pass-otp-entry-menu-map*)
+  (setf *pass-otp-entry-menu-map*
+        (let ((m (make-sparse-keymap)))
+          (define-key m (kbd "M-RET") (entry-menu-action :field-autotype))
+          (define-key m (kbd "RET") (entry-menu-action :field-copy))
+          m)))
+
 (defun otpauth-to-hex (secret)
   (format nil "~{~2,'0x~}" (coerce (cl-base32:base32-to-bytes secret) 'list)))
 
@@ -51,18 +59,37 @@
 (defmethod display ((obj password))
   (message (slot-value obj 'raw)))
 
+(defmethod field-filter ((obj password) &rest str)
+  (cond ((cl-ppcre:scan ": " (car str)) (cl-ppcre:register-groups-bind (field)
+                                       (": (.*)" (car str) :sharedp t)
+                                     field))
+        ((cl-ppcre:scan "otpauth:" (car str)) (otp obj))
+        (t (car str))))
+
+(defmethod field-copy ((obj password) &rest str)
+  (set-x-selection (field-filter obj (car str)) :clipboard))
+
+(defmethod field-autotype ((obj password) &rest str)
+  (run-shell-command
+   (format
+    nil
+    "xdotool type --delay ~A --clearmodifiers ~A"
+    *xdotool-delay*
+    (field-filter obj (car str)))))
+
 (defmethod display-menu ((obj password))
-  (let  ((sel (select-from-menu
-               (current-screen)
-               (format-menu (slot-value obj 'lines))
-               (format nil " [ ~A ]" (slot-value obj 'entry))
-               0)))
-    (when sel
-      (set-x-selection (cond ((cl-ppcre:scan ": " (car sel)) (cl-ppcre:register-groups-bind (field)
-                                                              (": (.*)" (car sel) :sharedp t)
-                                                            field))
-                              ((cl-ppcre:scan "otpauth:" (car sel)) (otp obj))
-                              (t (car sel))) :clipboard))))
+  (multiple-value-bind (action choice)
+      (select-from-menu
+       (current-screen)
+       (format-menu (slot-value obj 'lines))
+       (format nil " [ ~A ]" (slot-value obj 'entry))
+       0
+       *pass-otp-entry-menu-map*)
+    (case action
+      (:field-autotype
+       (field-autotype obj (car choice)))
+      (:field-copy
+       (field-copy obj (car choice))))))
 
 (defmethod passwd ((obj password))
  (car (slot-value obj 'lines)))
