@@ -13,29 +13,30 @@ https://github.com/jordansissel/xdotool/blob/08c8e2d6cad60a69ce415499e34865157a1
 
 Recreating it with cl-xlib is pointless, at least for such a meager purpose of typing something into a window. A LISP implementation of xdotool is a whole other different project, which might someday be written by someone, maybe.
 ** Features
-*** keymaps
-**** *pass-otp-menu-map*
-| key     | action                |
-|---------+-----------------------|
-| *RET*   | inline view           |
-| *C-RET* | open url              |
-| *M-RET* | autotype              |
-| *M-n*   | create new            |
-| *M-o*   | display               |
-| *M-e*   | edit                  |
-| *M-q*   | qr-code show/generate |
-**** *pass-otp-entry-menu-map*
-*** pinentry handler
-stolen from [[https://github.com/stumpwm/stumpwm-contrib/tree/master/util/pinentry][stumpwm-contrib/util/pinentry]]  (needed configurable port/host setts)
-*** open URL
-if ~url: (.*)~ field is found, then it is used, otherwise the entry path is converted to url.
-Given an entry in ~hosting.com/someuser~ like:
-#+BEGIN_SRC yaml
-  somepassword
-  ---
-  url: https://panel.hosting.com/login
-#+END_SRC
-command ~xdg-open https://panel.hosting.com/login~ will run, if ~url:~ wasn't found then ~https://hosting.com~ will be used instead.
+-  keymaps
+  *pass-otp-menu-map*
+  | key     | action                |
+  |---------+-----------------------|
+  | *RET*   | inline view           |
+  | *C-RET* | open url              |
+  | *M-RET* | autotype              |
+  | *M-n*   | create new            |
+  | *M-o*   | display               |
+  | *M-e*   | edit                  |
+  | *M-q*   | qr-code show/generate |
+
+  *pass-otp-entry-menu-map*
+- pinentry handler
+  stolen from [[https://github.com/stumpwm/stumpwm-contrib/tree/master/util/pinentry][stumpwm-contrib/util/pinentry]]  (needed configurable port/host setts)
+- open URL
+  if ~url: (.*)~ field is found, then it is used, otherwise the entry path is converted to url.
+  Given an entry in ~hosting.com/someuser~ like:
+  #+BEGIN_SRC yaml
+    somepassword
+    ---
+    url: https://panel.hosting.com/login
+  #+END_SRC
+  command ~xdg-open https://panel.hosting.com/login~ will run, if ~url:~ wasn't found then ~https://hosting.com~ will be used instead.
 *** adding new entries
 *** Edit existing Entries *M-e* runs ~pass edit~
 *** Inline view  *RET*
