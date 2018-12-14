@@ -148,7 +148,6 @@ Or tweak:
                                        m))
 #+END_SRC
 ** TODO:
-- qr otp with screenshot shennanigans
 - FIXME: gpg piv (ie. yubikey) will timeout on pin-entry
 - Switch pinentry to use unix domain sockets instead of IP?
 - Support for different password stores (roots), e.g. to separate passwords for work from private passwords
