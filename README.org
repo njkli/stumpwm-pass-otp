@@ -1,4 +1,4 @@
-#+STARTUP: indent overview align fold nodlcheck hidestars oddeven lognotestate inlineimages
+#+STARTUP: indent overview align nodlcheck hidestars oddeven lognotestate inlineimages
 * stumpwm pass-otp
 pass-otp helper for StumpWM
 
