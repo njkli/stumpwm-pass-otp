@@ -5,19 +5,46 @@ pass-otp helper for StumpWM
 *DO NOT USE* - this code is intended to be submitted to stumpwm-contrib repo at some point in time. Feel free to PR or educate me on lisp in the issues. Currently it ~works for me(tm)~.
 
 Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen most of the readme from, thanks!
-- Why?
+** Why?
+  For some strange reason, rofi-pass didn't work for my setup, the ~:otp~ was never autotyped, instead of debugging, it was decided to have a StumpWM 'native' version built.
+** Why xdotool and not cl-xlib?
+The ~xdotool type~ command sends key-[Press|Release] events to the X server, it sends individual events, as can be seen here:
+https://github.com/jordansissel/xdotool/blob/08c8e2d6cad60a69ce415499e34865157a1b66fd/xdo.c#L958
 
-  For some strange reason, rofi-pass didn't work for my setup, the ~:otp~ was never autotyped, instead of debugging (which should have been trivial, with rofi-pass being a bash script), it was decided to have a StumpWM 'native' version built.
+Recreating it with cl-xlib is pointless, at least for such a meager purpose of typing something into a window. A LISP implementation of xdotool is a whole other different project, which might someday be written by someone, maybe.
 ** Features
-- Includes pinentry handler (stolen from stumpwm-contrib, needed configurable port/host setts)
-- Open URLs of entries with hotkey
-- Add new Entries to Password Storage
-- Edit existing Entries (Emacs pass.el is a nice interface)
-- Inline view, which can copy/type individual entries
-- TODO Support for different password stores (roots), e.g. to separate passwords for work from private passwords
-- Type any field from entry
-- Auto-typing of user and/or password fields.
-- The format for password files should look like:
+*** keymaps
+**** *pass-otp-menu-map*
+| key     | action                |
+|---------+-----------------------|
+| *RET*   | inline view           |
+| *C-RET* | open url              |
+| *M-RET* | autotype              |
+| *M-n*   | create new            |
+| *M-o*   | display               |
+| *M-e*   | edit                  |
+| *M-q*   | qr-code show/generate |
+**** *pass-otp-entry-menu-map*
+*** pinentry handler
+stolen from [[https://github.com/stumpwm/stumpwm-contrib/tree/master/util/pinentry][stumpwm-contrib/util/pinentry]]  (needed configurable port/host setts)
+*** open URL
+if ~url: (.*)~ field is found, then it is used, otherwise the entry path is converted to url.
+Given an entry in ~hosting.com/someuser~ like:
+#+BEGIN_SRC yaml
+  somepassword
+  ---
+  url: https://panel.hosting.com/login
+#+END_SRC
+command ~xdg-open https://panel.hosting.com/login~ will run, if ~url:~ wasn't found then ~https://hosting.com~ will be used instead.
+*** adding new entries
+*** Edit existing Entries *M-e* runs ~pass edit~
+*** Inline view  *RET*
+  copy *RET* / type *M-RET* individual entries
+ Regex is ~": (.*)"~
+ Type any field from entry
+*** Auto-typing
+ of user and/or password fields.
+*** The format for password files should look like:
   #+BEGIN_SRC text
     foobarmysecurepassword
     user: MyUser
@@ -41,22 +68,19 @@ Compatible with [[https://github.com/carnager/rofi-pass][rofi-pass]] and stolen 
   Anything else will be typed verbatim as-is, like the ~any-string-at-all~ string in the example above.
 - The field names for user, url and autotype are configurable
 
-- Generating OTPs.
+*** Generating OTPs.
 
   The format for OTPs should be ~pass-otp(1)~-[[https://github.com/google/google-authenticator/wiki/Key-Uri-Format][compatible]] ~otpauth://[...]~
-- Window recognition regex
+*** Window recognition
 ** Dependencies
-- nc (pinentry depends on it)
+- [[http://zbar.sourceforge.net/][zbarimg]]
+- [[https://www.libressl.org][nc from libressl]] (or probably any other implementation of netcat)
 - [[https://github.com/jordansissel/xdotool][xdotool]]
-
-  It sends individual keys, as can be seen here:
-
-  https://github.com/jordansissel/xdotool/blob/08c8e2d6cad60a69ce415499e34865157a1b66fd/xdo.c#L958
-
-  recreating it with cl-xlib is pointless
 - [[https://github.com/freedesktop/xdg-utils][xdg-open from xdg-utils]]
 - [[https://www.passwordstore.org/][pass]]
+- [[https://github.com/tadfisher/pass-otp][pass-otp plugin]]
 - [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]]/[[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][chromium]] plugins to have url in title
+- [[https://github.com/stumpwm/stumpwm-contrib/tree/master/util/screenshot][stumpwm-contrib/screenshot]]
 ** Usage
 cat ~/.gnupg/gpg-agent.conf~
 #+BEGIN_SRC text
@@ -114,15 +138,17 @@ Or tweak:
         pass-otp:*pinentry-listen-port* 65530
         pass-otp:*field-regex-url* "url: (.*)"
         pass-otp:*pass-otp-menu-map* (let ((m (make-sparse-keymap)))
-                              (define-key m (kbd "M-RET") (pass-otp:entry-menu-action :entry-autotype))
-                              (define-key m (kbd "M-o") (pass-otp:entry-menu-action :entry-display))
-                              (define-key m (kbd "M-e") (pass-otp:entry-menu-action :entry-edit))
-                              (define-key m (kbd "M-n") (pass-otp:entry-menu-action :entry-create))
-                              (define-key m (kbd "C-RET") (pass-otp:entry-menu-action :entry-open-url))
-                              (define-key m (kbd "RET") (pass-otp:entry-menu-action :entry-menu))
-                              m))
+                                       (define-key m (kbd "M-RET") (pass-otp:entry-menu-action :entry-autotype))
+                                       (define-key m (kbd "M-o") (pass-otp:entry-menu-action :entry-display))
+                                       (define-key m (kbd "M-e") (pass-otp:entry-menu-action :entry-edit))
+                                       (define-key m (kbd "M-n") (pass-otp:entry-menu-action :entry-create))
+                                       (define-key m (kbd "C-RET") (pass-otp:entry-menu-action :entry-open-url))
+                                       (define-key m (kbd "M-q") (pass-otp:entry-menu-action :entry-qr-code))
+                                       (define-key m (kbd "RET") (pass-otp:entry-menu-action :entry-menu))
+                                       m))
 #+END_SRC
 ** TODO:
 - qr otp with screenshot shennanigans
 - FIXME: gpg piv (ie. yubikey) will timeout on pin-entry
 - Switch pinentry to use unix domain sockets instead of IP?
+- Support for different password stores (roots), e.g. to separate passwords for work from private passwords
