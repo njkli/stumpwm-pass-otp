@@ -79,7 +79,7 @@ command ~xdg-open https://panel.hosting.com/login~ will run, if ~url:~ wasn't fo
 - [[https://github.com/freedesktop/xdg-utils][xdg-open from xdg-utils]]
 - [[https://www.passwordstore.org/][pass]]
 - [[https://github.com/tadfisher/pass-otp][pass-otp plugin]]
-- [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]]/[[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][chromium]] plugins to have url in title
+- [[https://addons.mozilla.org/en-US/firefox/addon/url-hostname-in-title/][firefox]] / [[https://chrome.google.com/webstore/detail/ignpacbgnbnkaiooknalneoeladjnfgb][chromium]] plugins to have url in title
 - [[https://github.com/stumpwm/stumpwm-contrib/tree/master/util/screenshot][stumpwm-contrib/screenshot]]
 ** Usage
 cat ~/.gnupg/gpg-agent.conf~
