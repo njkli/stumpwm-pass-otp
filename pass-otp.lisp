@@ -1,12 +1,6 @@
 (in-package #:pass-otp)
 (access:enable-dot-syntax)
 
-
-(define-condition url-not-found-in-window-title (simple-error)
-  ()
-  (:report (lambda (c str)
-             (format str "Known window class, but URL could not be parsed!"))))
-
 (defvar *password-store-locked-p* t)
 
 (defvar *password-store-dir* nil)
@@ -41,9 +35,7 @@
 
 (defun domain (window-title-str)
   (let ((uri (cl-ppcre:scan-to-strings *uri-regex-scanner* window-title-str)))
-    ;; TODO: url-not-found-in-window-title
-    (quri:uri-domain (quri:uri uri))
-    ))
+    (quri:uri-domain (quri:uri uri))))
 
 (defun format-menu (items)
   (mapcar (lambda (i) (list i i)) items))
@@ -136,19 +128,16 @@
       (:entry-menu
        (entry-display-menu (car choice))))))
 
-;; TODO: force pin entry dialog, if keys are locked
-;; That doesn't work though, it hangs without asking for pin
-;; (defun handle-pin-entry ()
-;;     (run-shell-command (format nil "pass show ~A" (car (pass-entries))))
-;;     (setf *password-store-locked-p* nil))
-
-;; (*password-store-locked-p* (handle-pin-entry))
-
 (defcommand pass-otp () ()
   "Show entries for current window"
-  (cond ((find-match) (entries-menu (find-match)))
-        ((known-window-class-p) (entry-create-with-url))
-        (t (entries-menu (pass-entries)))))
+  (handler-case
+      (cond ((find-match) (entries-menu (find-match)))
+            ((known-window-class-p) (entry-create-with-url))
+            (t (entries-menu (pass-entries))))
+    (error (c)
+      (message "^B^1*URL not found:~%^n~A" (window-title (current-window))))
+    (:no-error (&rest args)
+      (declare (ignore args)))))
 
 (defcommand pass-otp-show-all () ()
   "Show all entries"

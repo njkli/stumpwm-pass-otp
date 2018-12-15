@@ -1,4 +1,3 @@
-;; Handling pass entries here
 (in-package #:pass-otp)
 
 (defvar *autotype* (hash (":enter" "xdotool key Return")
@@ -59,10 +58,11 @@
 (defmethod display ((obj password))
   (message (slot-value obj 'raw)))
 
+;; TODO: scan-to-string instead of group bind
 (defmethod field-filter ((obj password) &rest str)
   (cond ((cl-ppcre:scan ": " (car str)) (cl-ppcre:register-groups-bind (field)
-                                       (": (.*)" (car str) :sharedp t)
-                                     field))
+                                            (": (.*)" (car str) :sharedp t)
+                                          field))
         ((cl-ppcre:scan "otpauth:" (car str)) (otp obj))
         (t (car str))))
 
@@ -92,7 +92,7 @@
        (field-copy obj (car choice))))))
 
 (defmethod passwd ((obj password))
- (car (slot-value obj 'lines)))
+  (car (slot-value obj 'lines)))
 
 (defmethod uname ((obj password))
   (let ((defined (field-for obj *field-regex-username*)))
