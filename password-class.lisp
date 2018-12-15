@@ -114,8 +114,6 @@
           (write-to-string (cl-totp:totp (otpauth-to-hex secret))))
         nil)))
 
-;; (message (format nil "^B^1OTP undefined:~%^n~A" (entry obj))  )
-
 (defmethod field-for ((obj password) &rest regex)
   (cl-ppcre:register-groups-bind (field)
       ((car regex) (slot-value obj 'raw) :sharedp t)
@@ -131,7 +129,10 @@
                                 (list (hash-get *autotype* (list at))))))
             ((field-for obj (format nil "~A: (.*)" at))
              (setf cmds (append cmds
-                                (list (concat xdt " " (field-for obj (format nil "~A: (.*)" at)))))))
+                                (list (concat xdt
+                                              " "
+                                              (format nil "'~A'"
+                                                      (field-for obj (format nil "~A: (.*)" at))))))))
             ((cl-ppcre:scan ":otp" at)
              (setf cmds (append cmds
                                 (list (concat xdt " " (otp obj))))))
@@ -140,13 +141,13 @@
                                 (list (format nil "sleep ~A" *autotype-delay*)))))
             ((cl-ppcre:scan *autotype-regex-password* at)
              (setf cmds (append cmds
-                                (list (concat xdt " " (passwd obj))))))
+                                (list (concat xdt " " (format nil "'~A'" (passwd obj)))))))
             ((cl-ppcre:scan *autotype-regex-username* at)
              (setf cmds (append cmds
-                                (list (concat xdt " " (uname obj))))))
+                                (list (concat xdt " " (format nil "'~A'" (uname obj)))))))
             (t
              (setf cmds (append cmds
-                                (list (concat xdt " " at)))))))
+                                (list (concat xdt " " (format nil "'~A'" at))))))))
     (run-shell-command (format nil "~{~a~^ && ~}" cmds))))
 
 (defmethod qr-code-show ((obj password))
