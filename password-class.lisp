@@ -73,7 +73,7 @@
   (run-shell-command
    (format
     nil
-    "xdotool type --delay ~A --clearmodifiers ~A"
+    "xdotool type --delay ~A --clearmodifiers '~A'"
     *xdotool-delay*
     (field-filter obj (car str)))))
 
